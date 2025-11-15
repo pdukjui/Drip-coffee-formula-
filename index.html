@@ -1,455 +1,235 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ผู้ช่วยดริปกาแฟ</title>
-    <!-- 1. Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 2. Google Font (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* 3. ใช้ฟอนต์ Sarabun เป็นหลัก */
-        body {
-            font-family: 'Sarabun', 'Inter', sans-serif;
-        }
-        /* ซ่อนลูกศรสำหรับ input number */
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drip Coffee Simulator V-Cone</title>
+<style>
+body { font-family: 'Inter', sans-serif; padding: 20px; background: #f0f2f5; }
+.container { max-width: 700px; margin: auto; background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+h2 { text-align: center; margin-bottom: 20px; }
+select, input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 8px; }
+button { padding: 14px; width: 100%; margin-top: 12px; font-size: 16px; border-radius: 10px; border: none; cursor: pointer; }
+button.start { background: #4CAF50; color: #fff; }
+button.pause { background: #ff9800; color: #fff; }
+button.reset { background: #f44336; color: #fff; }
+#timer { font-size: 36px; text-align: center; margin-top: 20px; font-weight: bold; color:#333; }
+#recipeDesc { background:#f7f3ff; border-left:5px solid #9b59b6; padding:10px; border-radius:6px; margin-top:10px; white-space: pre-line; }
+.step { margin-top: 12px; padding: 12px; background: #f0f6ff; border-radius: 10px; border-left: 6px solid #4a90e2; position: relative; }
+.step-details { margin-top: 6px; font-size: 14px; color: #555; }
+.progress-bar { position: absolute; bottom: 0; left: 0; height: 5px; background: #4CAF50; width: 0%; border-radius:0 0 6px 6px; transition: width 0.1s linear; }
+.water-progress { margin-top: 6px; font-size: 14px; color: #333; }
+
+.drip-container { position: relative; width: 200px; height: 300px; margin: 30px auto; }
+.dripper { position: absolute; width: 100px; height: 80px; top: 0; left: 50%; transform: translateX(-50%); background: #bfa17c;
+           clip-path: polygon(0 0, 100% 0, 50% 100%); border: 2px solid #8c6c3a; }
+.carafe { position: absolute; width: 100px; height: 200px; bottom: 0; left: 50%; transform: translateX(-50%); border: 2px solid #333; border-radius: 0 0 15px 15px; background: #fff; overflow: hidden; }
+.water { position: absolute; bottom: 0; width: 100%; height: 0%; background: linear-gradient(to top, #4B2E00, #A67C52); transition: height 0.05s linear; }
+.scale { position: absolute; right: 105%; bottom:0; height:100%; width:40px; border-left:2px solid #555; }
+.scale div { position:absolute; width:100%; text-align:right; font-size:12px; color:#555; transform: translateY(50%); }
+
+.bubble { position: absolute; width: 6px; height: 6px; background: rgba(255,255,255,0.8); border-radius: 50%; opacity: 0.8; }
+.steam { position: absolute; width: 8px; height: 20px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: rise 2s linear infinite; }
+@keyframes rise { 0% {transform: translateY(0) scaleX(1);} 50% {transform: translateY(-20px) scaleX(1.2);} 100% {transform: translateY(-40px) scaleX(1);} }
+
+.drip { position: absolute; width: 6px; height: 6px; background: #4B2E00; border-radius: 50%; top:0; left:50%; transform: translateX(-50%); }
+.ice { position: absolute; width: 16px; height: 16px; background: #a3d8f4; border-radius: 4px; opacity: 0.8; }
+</style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body>
+<div class="container">
+<h2>🧋 ตัวช่วยดริปกาแฟ V-Cone</h2>
 
-    <div classs="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
-        
-        <!-- Header -->
-        <header class="bg-yellow-800 p-5 text-white">
-            <h1 class="text-2xl font-bold text-center">ผู้ช่วยดริปกาแฟ</h1>
-        </header>
+<label>เลือกสูตรกาแฟ:</label>
+<select id="recipe">
+  <option value="pourHot">Pour‑Over ร้อน</option>
+  <option value="dripIce">Drip on Ice</option>
+</select>
 
-        <!-- ===== 1. หน้าจอตั้งค่า (Setup Screen) ===== -->
-        <main id="setupScreen" class="p-6 space-y-5">
-            <div>
-                <label for="recipeSelect" class="block text-sm font-medium text-gray-700 mb-1">เลือกสูตรกาแฟ:</label>
-                <select id="recipeSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
-                    <!-- สูตรจะถูกเพิ่มโดย JavaScript -->
-                </select>
-            </div>
+<p id="recipeDesc">คำอธิบายสูตรจะปรากฏที่นี่</p>
 
-            <div>
-                <label for="coffeeAmount" class="block text-sm font-medium text-gray-700 mb-1">ปริมาณกาแฟ (กรัม):</label>
-                <input type="number" id="coffeeAmount" value="20" min="10" max="100" class="w-full p-3 border border-gray-300 rounded-lg text-center text-xl font-bold focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
-            </div>
+<label>ปริมาณกาแฟ (กรัม):</label>
+<input type="number" id="coffeeInput" value="15" />
 
-            <!-- แสดงข้อมูลสรุป -->
-            <div class="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div class="flex justify-between items-center text-lg">
-                    <span class="text-gray-600">อัตราส่วน (กาแฟ : น้ำร้อน):</span>
-                    <span id="ratioDisplay" class="font-bold text-gray-900">1 : 15</span>
-                </div>
-                <!-- เพิ่มการแสดงน้ำแข็งสำหรับสูตรเย็น -->
-                <div id="iceWaterSection" class="hidden">
-                    <div class="flex justify-between items-center text-lg">
-                        <span class="text-gray-600">ปริมาณน้ำแข็ง:</span>
-                        <span id="iceAmountDisplay" class="font-bold text-blue-600">0 ml</span>
-                    </div>
-                </div>
-                <div class="flex justify-between items-center text-lg">
-                    <span class="text-gray-600">ปริมาณน้ำร้อนทั้งหมด:</span>
-                    <span id="totalWaterDisplay" class="font-bold text-yellow-800 text-xl">300 ml</span>
-                </div>
-            </div>
+<p id="waterResult">ปริมาณน้ำทั้งหมด: — ml</p>
 
-            <button id="startDripButton" class="w-full bg-yellow-600 text-white p-4 rounded-lg text-lg font-bold hover:bg-yellow-700 transition duration-200 shadow-md">
-                เริ่มดริป
-            </button>
-        </main>
+<button class="start" onclick="startBrewing()">เริ่ม</button>
+<button class="pause" onclick="pauseBrewing()">หยุดชั่วคราว</button>
+<button class="reset" onclick="resetBrewing()">รีเซ็ต</button>
 
-        <!-- ===== 2. หน้าจอดริป (Drip Screen) ===== -->
-        <main id="dripScreen" class="p-6 space-y-4 hidden flex flex-col items-center">
-            <div class="text-6xl font-mono font-bold text-gray-800" id="mainTimer">00:00</div>
-            
-            <div class="w-full bg-gray-50 p-3 rounded-lg text-center">
-                <div class="text-sm text-gray-500">น้ำหนักรวมของน้ำร้อนที่เทไป</div>
-                <div class="text-xl font-bold text-gray-800" id="totalPouredDisplay">0 ml / 300 ml</div>
-            </div>
+<div id="timer">00:00</div>
 
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-                <div id="progressBar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
+<h3>ขั้นตอน</h3>
+<div id="steps"></div>
 
-            <!-- การ์ดแสดงขั้นตอน -->
-            <div class="w-full bg-white border border-gray-200 p-5 rounded-lg shadow-inner text-center space-y-2">
-                <div id="stepName" class="text-xl font-bold text-yellow-800">ขั้นตอนที่ 1: บลูม</div>
-                <div id="stepInstruction" class="text-3xl font-bold text-gray-900">เทน้ำ 60 ml</div>
-                <div id="stepTimerDisplay" class="text-5xl font-mono font-bold text-blue-600">--:--</div>
-            </div>
-            
-            <button id="nextStepButton" class="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-bold hover:bg-blue-700 transition duration-200 shadow-md disabled:bg-gray-400">
-                เริ่มจับเวลารอ
-            </button>
-            <button id="resetButton" class="w-full bg-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-300 transition">
-                กลับไปหน้าแรก
-            </button>
-        </main>
+<div class="drip-container">
+  <div class="dripper" id="dripper"></div>
+  <div class="carafe" id="carafe">
+    <div class="water" id="carafeWater"></div>
+    <div class="scale" id="scale"></div>
+  </div>
+</div>
+</div>
 
-        <!-- ===== 3. หน้าจอเสร็จสิ้น (Done Screen) ===== -->
-        <main id="doneScreen" class="p-10 space-y-4 hidden flex flex-col items-center text-center">
-            <div class="text-6xl">🎉</div>
-            <h2 class="text-2xl font-bold text-gray-800">ดริปเสร็จแล้ว!</h2>
-            <div class="text-lg text-gray-600">
-                ใช้เวลาทั้งหมด: <span id="finalTime" class="font-bold">00:00</span>
-            </div>
-            <p class="text-gray-500">หวังว่ากาแฟจะอร่อยนะครับ!</p>
-            <button id="restartButton" class="w-full bg-yellow-600 text-white p-4 rounded-lg text-lg font-bold hover:bg-yellow-700 transition duration-200 shadow-md">
-                ดริปอีกครั้ง
-            </button>
-        </main>
+<audio id="stepSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" type="audio/ogg">
+</audio>
+<audio id="dripSound">
+  <source src="https://actions.google.com/sounds/v1/foley/drip.ogg" type="audio/ogg">
+</audio>
 
-    </div>
+<script>
+const recipeDetails = {
+pourHot:{description:`สูตร Pour‑Over ร้อน:\n- อัตราส่วนกาแฟ:น้ำ = 1:17\n- อุณหภูมิน้ำ: 90–96°C\n- เน้นบาลานซ์รสชาติ`, ratio:17, steps:[{text:"Bloom",time:30},{text:"รินรอบสอง",time:60},{text:"รินรอบสุดท้าย",time:90}]},
+dripIce:{description:`สูตร Drip on Ice:\n- อัตราส่วนกาแฟ:น้ำ 1:10\n- เทน้ำร้อนบนกาแฟแล้วหยดลงน้ำแข็ง\n- สดชื่น`, ratio:10, steps:[{text:"Bloom",time:30},{text:"รินน้ำลงก้อนน้ำแข็ง",time:90},{text:"รินรอบจบ",time:60}]}
+};
 
-    <script>
-        // --- 1. ฐานข้อมูลสูตร (Recipes Database) ---
-        // calc_type: 'coffee_x' (คูณน้ำหนักกาแฟ), 'remaining_percent' (เปอร์เซ็นต์ของน้ำที่เหลือ), 'total_percent' (เปอร์เซ็นต์ของน้ำทั้งหมด)
-        // isIced: true สำหรับสูตรดริปเย็น
-        // finalRatio: อัตราส่วนสุดท้าย กาแฟ:น้ำ+น้ำแข็ง (ใช้ในการคำนวณน้ำแข็ง)
-        const recipes = [
-            {
-                id: 'classic_15',
-                name: 'ร้อน: สูตรคลาสสิก (1:15)',
-                defaultRatio: 15,
-                isIced: false,
-                finalRatio: 15,
-                steps: [
-                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, // 3x น้ำหนักกาแฟ, รอ 45 วิ
-                    { name: 'เทครั้งที่ 1', calc_type: 'remaining_percent', value: 0.5, duration: 30 }, // 50% ของน้ำที่เหลือ, รอ 30 วิ
-                    { name: 'เทครั้งที่ 2', calc_type: 'remaining_percent', value: 1.0, duration: 30 }, // 100% ของน้ำที่เหลือ, รอ 30 วิ
-                ]
-            },
-            {
-                id: 'strong_13',
-                name: 'ร้อน: สูตรเข้มข้น (1:13)',
-                defaultRatio: 13,
-                isIced: false,
-                finalRatio: 13,
-                steps: [
-                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, // 3x, รอ 45 วิ
-                    { name: 'เทครั้งที่ 1', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
-                    { name: 'เทครั้งที่ 2', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
-                    { name: 'เทครั้งที่ 3', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
-                    { name: 'เทครั้งที่ 4', calc_type: 'coffee_x', value: 2.5, duration: 0 }, // 2.5x, ไม่ต้องรอ
-                ]
-            },
-            {
-                id: 'iced_strong_9_5',
-                name: 'เย็น: สูตรเข้มข้น (1:9.5) Hot Water',
-                defaultRatio: 9.5, // 9.5 ส่วนคือน้ำร้อนที่ใช้ดริป
-                isIced: true,
-                finalRatio: 15, // อัตราส่วนสุดท้ายรวมน้ำแข็ง (กาแฟ:น้ำ+น้ำแข็ง)
-                steps: [
-                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, 
-                    { name: 'เทครั้งที่ 1', calc_type: 'remaining_percent', value: 0.5, duration: 30 },
-                    { name: 'เทครั้งที่ 2', calc_type: 'remaining_percent', value: 1.0, duration: 0 }, // เทจนน้ำร้อนหมด
-                ]
-            },
-            {
-                id: 'iced_standard_10',
-                name: 'เย็น: สูตรมาตรฐาน (1:10) Hot Water',
-                defaultRatio: 10, // 10 ส่วนคือน้ำร้อนที่ใช้ดริป
-                isIced: true,
-                finalRatio: 16, // อัตราส่วนสุดท้ายรวมน้ำแข็ง (กาแฟ:น้ำ+น้ำแข็ง)
-                steps: [
-                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, 
-                    { name: 'เทครั้งที่ 1', calc_type: 'total_percent', value: 0.5, duration: 30 }, // เทถึง 50% ของน้ำร้อน
-                    { name: 'เทครั้งที่ 2', calc_type: 'total_percent', value: 0.8, duration: 30 }, // เทถึง 80% ของน้ำร้อน
-                    { name: 'เทครั้งที่ 3', calc_type: 'total_percent', value: 1.0, duration: 0 }, // เทจนน้ำร้อนหมด
-                ]
-            }
-        ];
+const recipeSelect=document.getElementById('recipe');
+const coffeeInput=document.getElementById('coffeeInput');
+const recipeDesc=document.getElementById('recipeDesc');
+const waterResult=document.getElementById('waterResult');
+const stepSound=document.getElementById('stepSound');
+const dripSound=document.getElementById('dripSound');
+const carafeWater=document.getElementById('carafeWater');
+const carafe=document.getElementById('carafe');
+const scaleDiv=document.getElementById('scale');
+const dripper=document.getElementById('dripper');
 
-        // --- 2. ตัวแปรสถานะ (State Variables) ---
-        let currentRecipe;
-        let coffeeGrams = 20;
-        let totalHotWater = 0; // ปริมาณน้ำร้อนทั้งหมดที่ใช้ดริป
-        let totalIce = 0; // ปริมาณน้ำแข็งที่ใช้
-        let totalPoured = 0;
-        let currentStepIndex = 0;
-        let dripState = 'pouring'; // 'pouring' หรือ 'waiting'
-        let mainTimerSeconds = 0;
-        let stepTimerSeconds = 0;
-        let mainTimerInterval;
-        let stepTimerInterval;
+let paused=false, animationId, startTimeGlobal;
+let dropInterval;
 
-        // --- 3. DOM Elements ---
-        const setupScreen = document.getElementById('setupScreen');
-        const dripScreen = document.getElementById('dripScreen');
-        const doneScreen = document.getElementById('doneScreen');
+function updateRecipe(){ 
+  const recipe=recipeSelect.value; 
+  recipeDesc.innerText=recipeDetails[recipe].description; 
+  updateWater();
+}
+function updateWater(){ 
+  const coffee=Number(coffeeInput.value); 
+  const recipe=recipeSelect.value; 
+  const water=coffee*recipeDetails[recipe].ratio; 
+  waterResult.innerText=`ปริมาณน้ำทั้งหมด: ${water} ml`;
+  createScale(water);
+}
+recipeSelect.addEventListener('change',updateRecipe);
+coffeeInput.addEventListener('input',updateRecipe);
 
-        const recipeSelect = document.getElementById('recipeSelect');
-        const coffeeAmount = document.getElementById('coffeeAmount');
-        const ratioDisplay = document.getElementById('ratioDisplay');
-        const iceWaterSection = document.getElementById('iceWaterSection');
-        const iceAmountDisplay = document.getElementById('iceAmountDisplay');
-        const totalWaterDisplay = document.getElementById('totalWaterDisplay');
-        const startDripButton = document.getElementById('startDripButton');
+function createScale(totalWater){
+  scaleDiv.innerHTML='';
+  const steps = 10;
+  for(let i=0;i<=steps;i++){
+    const div=document.createElement('div');
+    div.style.bottom=(i/steps*100)+'%';
+    div.innerText=Math.round((i/steps)*totalWater)+' ml';
+    scaleDiv.appendChild(div);
+  }
+}
 
-        const mainTimer = document.getElementById('mainTimer');
-        const totalPouredDisplay = document.getElementById('totalPouredDisplay');
-        const progressBar = document.getElementById('progressBar');
-        const stepName = document.getElementById('stepName');
-        const stepInstruction = document.getElementById('stepInstruction');
-        const stepTimerDisplay = document.getElementById('stepTimerDisplay');
-        const nextStepButton = document.getElementById('nextStepButton');
-        const resetButton = document.getElementById('resetButton');
-        
-        const finalTime = document.getElementById('finalTime');
-        const restartButton = document.getElementById('restartButton');
+function startBrewing(){
+  resetBrewing(); paused=false;
+  const recipe=recipeSelect.value;
+  const steps=recipeDetails[recipe].steps;
+  const coffeeAmount=Number(coffeeInput.value);
+  const totalWater=coffeeAmount*recipeDetails[recipe].ratio;
+  const totalTime=steps.reduce((a,b)=>a+b.time,0);
+  startTimeGlobal=performance.now();
 
-        // --- 4. Helper Functions ---
-        
-        /** ฟอร์แมตเวลา (วินาที) เป็น "mm:ss" */
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            return `${m}:${s}`;
-        }
+  const stepsDiv=document.getElementById('steps');
+  stepsDiv.innerHTML='';
+  let accumulatedTime=0, accumulatedWater=0;
+  steps.forEach((step,index)=>{
+    accumulatedTime+=step.time;
+    accumulatedWater+=totalWater*(step.time/totalTime);
+    const stepDiv=document.createElement('div');
+    stepDiv.className='step';
+    stepDiv.innerHTML=`<strong>${step.text}</strong>
+      <div class="step-details">เวลาของขั้นตอน: ${step.time} วินาที<br>เวลารวม: ${accumulatedTime} วินาที<br>ปริมาตรน้ำรวม: ${Math.round(accumulatedWater)} ml</div>
+      <div class="progress-bar" id="progress-${index}"></div>
+      <div class="water-progress" id="water-${index}">น้ำไหล: 0 ml</div>
+      <span id="step-${index}">${step.time}</span> วินาที`;
+    stepsDiv.appendChild(stepDiv);
+  });
 
-        /** คำนวณน้ำสำหรับขั้นตอนปัจจุบัน */
-        function calculateWaterForStep(step) {
-            let water = 0;
-            const remainingWater = totalHotWater - totalPoured;
-            
-            switch (step.calc_type) {
-                case 'coffee_x':
-                    water = coffeeGrams * step.value;
-                    break;
-                case 'remaining_percent':
-                    water = remainingWater * step.value;
-                    break;
-                case 'total_percent':
-                    // คำนวณน้ำที่ต้องเท "เพิ่ม" เพื่อให้ถึงเปอร์เซ็นต์นั้น
-                    const targetTotal = totalHotWater * step.value;
-                    water = targetTotal - totalPoured;
-                    break;
-            }
-            // ปัดเศษและป้องกันไม่ให้น้ำเกิน
-            return Math.min(Math.round(water), remainingWater);
-        }
+  if(recipe==='dripIce'){
+    for(let i=0;i<3;i++){
+      const ice=document.createElement('div');
+      ice.className='ice';
+      ice.style.left=(20+Math.random()*60)+'%';
+      ice.style.bottom=(Math.random()*30+10)+'%';
+      carafe.appendChild(ice);
+    }
+  }
 
-        /** อัปเดต UI หน้าตั้งค่า */
-        function updateSetupUI() {
-            currentRecipe = recipes.find(r => r.id === recipeSelect.value);
-            coffeeGrams = parseInt(coffeeAmount.value) || 20;
-            
-            // ปริมาณน้ำร้อนที่ใช้ดริป (Hot Water)
-            totalHotWater = Math.round(coffeeGrams * currentRecipe.defaultRatio);
-            
-            ratioDisplay.textContent = `1 : ${currentRecipe.defaultRatio}`;
-            totalWaterDisplay.textContent = `${totalHotWater} ml`;
-            
-            // จัดการสูตรดริปเย็น
-            if (currentRecipe.isIced) {
-                iceWaterSection.classList.remove('hidden');
-                // คำนวณปริมาณน้ำแข็ง: น้ำทั้งหมดที่ต้องการ (ตาม finalRatio) - น้ำร้อนที่ใช้ดริป
-                // Iced Ratio (e.g., 1:15 or 1:16) = Coffee : (Hot Water + Ice)
-                const totalLiquidNeeded = Math.round(coffeeGrams * currentRecipe.finalRatio);
-                totalIce = Math.max(0, totalLiquidNeeded - totalHotWater); // น้ำแข็งจะไม่เป็นค่าติดลบ
-                
-                iceAmountDisplay.textContent = `${totalIce} ml`;
-            } else {
-                iceWaterSection.classList.add('hidden');
-                totalIce = 0;
-            }
-        }
+  const dropIntervalMs = 200;
+  const dropsTotal = totalTime*1000/dropIntervalMs;
+  const waterPerDrop = totalWater/dropsTotal;
+  dropInterval=setInterval(()=>{ createDrop(waterPerDrop); },dropIntervalMs);
 
-        /** อัปเดต Progress Bar */
-        function updateProgressBar() {
-            const percent = (totalPoured / totalHotWater) * 100;
-            progressBar.style.width = `${percent}%`;
-            totalPouredDisplay.textContent = `${Math.round(totalPoured)} ml / ${totalHotWater} ml`;
-        }
+  animateSteps(recipe,totalWater,totalTime,steps);
+}
 
+function createDrop(waterPerDrop){
+  if(paused) return;
+  const drop=document.createElement('div');
+  drop.className='drip';
+  const dripperRect = dripper.getBoundingClientRect();
+  const containerRect = document.querySelector('.drip-container').getBoundingClientRect();
+  drop.style.left=(dripperRect.left - containerRect.left + dripperRect.width/2)+'px';
+  drop.style.top='80px';
+  document.querySelector('.drip-container').appendChild(drop);
+  dripSound.currentTime=0; dripSound.play();
 
-        // --- 5. Main Logic Functions ---
+  let pos=0;
+  const speed=2+Math.random()*1.5;
+  function fall(){
+    if(!drop.parentNode) return;
+    pos+=speed;
+    drop.style.top=(80+pos)+'px';
+    if(pos>=carafe.offsetHeight-5){
+      drop.remove();
+      const currentHeight=parseFloat(carafeWater.style.height||0);
+      const newHeight=Math.min(currentHeight + (waterPerDrop/parseFloat(coffeeInput.value*recipeDetails[recipeSelect.value].ratio))*100,100);
+      carafeWater.style.height=newHeight+'%';
+    } else requestAnimationFrame(fall);
+  }
+  fall();
+}
 
-        /** แสดงขั้นตอนการเทน้ำ */
-        function showPourStep(stepIndex) {
-            dripState = 'pouring';
-            const step = currentRecipe.steps[stepIndex];
-            if (!step) {
-                showDoneScreen();
-                return;
-            }
-            
-            const waterForThisStep = calculateWaterForStep(step);
-            const targetWater = totalPoured + waterForThisStep;
-            
-            stepName.textContent = `ขั้นตอนที่ ${stepIndex + 1}: ${step.name}`;
-            stepInstruction.textContent = `เทน้ำร้อนถึง ${Math.round(targetWater)} ml`;
-            stepTimerDisplay.textContent = '--:--';
-            nextStepButton.textContent = 'เริ่มจับเวลารอ';
-            nextStepButton.disabled = false;
-            
-            if (step.duration === 0) {
-                nextStepButton.textContent = 'ขั้นตอนถัดไป';
-            }
-        }
+function animateSteps(recipe,totalWater,totalTime,steps){
+  function animate(time){
+    if(!paused){
+      let elapsedTotal=(time-startTimeGlobal)/1000;
+      let cumulativeTime=0;
+      steps.forEach((step,i)=>{
+        const stepStart=cumulativeTime, stepElapsed=Math.max(0,Math.min(elapsedTotal-stepStart,step.time));
+        const progressPercent=(stepElapsed/step.time)*100;
+        document.getElementById(`progress-${i}`).style.width=progressPercent+'%';
+        const waterSoFar=totalWater*(elapsedTotal/totalTime);
+        document.getElementById(`water-${i}`).innerText=`น้ำไหล: ${Math.min(Math.round(waterSoFar),totalWater)} ml`;
+        const timeLeft=Math.max(0,step.time-stepElapsed);
+        document.getElementById(`step-${i}`).innerText=Math.round(timeLeft);
+        if(timeLeft===5) stepSound.play();
+        cumulativeTime+=step.time;
+      });
+      const remainingTime=Math.max(0,totalTime-elapsedTotal);
+      document.getElementById('timer').innerText=`${String(Math.floor(remainingTime/60)).padStart(2,'0')}:${String(Math.floor(remainingTime%60)).padStart(2,'0')}`;
 
-        /** แสดงขั้นตอนการรอ */
-        function showWaitStep(stepIndex) {
-            dripState = 'waiting';
-            const step = currentRecipe.steps[stepIndex];
-            stepTimerSeconds = step.duration;
+      createBubbles(100);
+      createSteam(100);
 
-            stepName.textContent = 'รอ... (Wait)';
-            stepInstruction.textContent = `เป็นเวลา ${step.duration} วินาที`;
-            stepTimerDisplay.textContent = formatTime(stepTimerSeconds);
-            nextStepButton.textContent = 'กำลังจับเวลา...';
-            nextStepButton.disabled = true;
+      if(elapsedTotal<totalTime) animationId=requestAnimationFrame(animate);
+      else clearInterval(dropInterval);
+    }else animationId=requestAnimationFrame(animate);
+  }
+  animationId=requestAnimationFrame(animate);
+}
 
-            // เริ่มนับถอยหลัง
-            clearInterval(stepTimerInterval);
-            stepTimerInterval = setInterval(() => {
-                stepTimerSeconds--;
-                stepTimerDisplay.textContent = formatTime(stepTimerSeconds);
-                
-                if (stepTimerSeconds <= 0) {
-                    clearInterval(stepTimerInterval);
-                    stepTimerDisplay.textContent = '00:00';
-                    nextStepButton.textContent = 'ขั้นตอนถัดไป';
-                    nextStepButton.disabled = false;
-                    // อาจจะเพิ่มเสียงเตือน
-                    try {
-                        // Vibrate on mobile devices for 200ms
-                        if ('vibrate' in navigator) {
-                            navigator.vibrate(200); 
-                        }
-                    } catch (e) {
-                        console.error('Vibrate failed:', e);
-                    }
-                }
-            }, 1000);
-        }
+function createBubbles(){ if(Math.random()<0.05){ const bubble=document.createElement('div'); bubble.className='bubble'; bubble.style.left=Math.random()*100+'%'; bubble.style.bottom='0px'; carafe.appendChild(bubble); let rise=0; function floatBubble(){ if(!bubble.parentNode) return; rise+=1; bubble.style.bottom=rise+'px'; bubble.style.opacity=1-rise/50; if(rise<50) requestAnimationFrame(floatBubble); else bubble.remove(); } floatBubble(); } }
+function createSteam(){ if(Math.random()<0.03){ const steam=document.createElement('div'); steam.className='steam'; steam.style.left=(40+Math.random()*20)+'%'; steam.style.bottom='100%'; carafe.appendChild(steam); setTimeout(()=>steam.remove(),2000); } }
 
-        /** แสดงหน้าจอเสร็จสิ้น */
-        function showDoneScreen() {
-            clearInterval(mainTimerInterval);
-            clearInterval(stepTimerInterval);
-            dripScreen.classList.add('hidden');
-            dripScreen.classList.remove('flex');
-            doneScreen.classList.remove('hidden');
-            finalTime.textContent = formatTime(mainTimerSeconds);
-        }
+function pauseBrewing(){ paused=!paused; }
+function resetBrewing(){ cancelAnimationFrame(animationId); clearInterval(dropInterval); document.getElementById('timer').innerText='00:00'; document.getElementById('steps').innerHTML=''; carafeWater.style.height='0%'; const oldIce=document.querySelectorAll('.ice'); oldIce.forEach(e=>e.remove()); const oldDrops=document.querySelectorAll('.drip'); oldDrops.forEach(e=>e.remove()); paused=false; }
 
-        /** จัดการการคลิกปุ่ม "ถัดไป" */
-        function handleNextClick() {
-            const step = currentRecipe.steps[currentStepIndex];
-            if (!step) return;
-
-            if (dripState === 'pouring') {
-                // เพิ่งเทเสร็จ, อัปเดตน้ำที่เทไปแล้ว
-                const waterForThisStep = calculateWaterForStep(step);
-                totalPoured += waterForThisStep;
-                updateProgressBar();
-
-                if (step.duration > 0) {
-                    // ถ้ามีเวลารอ ให้ไปหน้าจอรอ
-                    showWaitStep(currentStepIndex);
-                } else {
-                    // ถ้าไม่มีเวลารอ (เช่น เทครั้งสุดท้าย)
-                    currentStepIndex++;
-                    if (currentStepIndex >= currentRecipe.steps.length) {
-                        showDoneScreen();
-                    } else {
-                        showPourStep(currentStepIndex);
-                    }
-                }
-            } else if (dripState === 'waiting') {
-                // เพิ่งรอเสร็จ, ไปขั้นตอนการเทถัดไป
-                currentStepIndex++;
-                if (currentStepIndex >= currentRecipe.steps.length) {
-                    showDoneScreen();
-                } else {
-                    showPourStep(currentStepIndex);
-                }
-            }
-        }
-
-        /** เริ่มการดริป */
-        function startDrip() {
-            // 1. ซ่อนหน้าตั้งค่า แสดงหน้าดริป
-            setupScreen.classList.add('hidden');
-            dripScreen.classList.remove('hidden');
-            dripScreen.classList.add('flex');
-            doneScreen.classList.add('hidden');
-
-            // 2. รีเซ็ตค่า
-            currentStepIndex = 0;
-            totalPoured = 0;
-            mainTimerSeconds = 0;
-            mainTimer.textContent = '00:00';
-            updateProgressBar();
-
-            // 3. เริ่มจับเวลาหลัก
-            clearInterval(mainTimerInterval);
-            mainTimerInterval = setInterval(() => {
-                mainTimerSeconds++;
-                mainTimer.textContent = formatTime(mainTimerSeconds);
-            }, 1000);
-
-            // 4. แสดงขั้นตอนแรก
-            showPourStep(0);
-        }
-        
-        /** รีเซ็ตแอปกลับไปหน้าตั้งค่า */
-        function handleReset() {
-            clearInterval(mainTimerInterval);
-            clearInterval(stepTimerInterval);
-            
-            dripScreen.classList.add('hidden');
-            dripScreen.classList.remove('flex');
-            doneScreen.classList.add('hidden');
-            setupScreen.classList.remove('hidden');
-            
-            // ไม่ต้องรีเซ็ตค่าในหน้า setup
-        }
-
-        /** เริ่มต้นแอป */
-        function init() {
-            // 1. เพิ่มสูตรลงใน select
-            recipes.forEach(recipe => {
-                const option = document.createElement('option');
-                option.value = recipe.id;
-                option.textContent = recipe.name;
-                recipeSelect.appendChild(option);
-            });
-            
-            // 2. อัปเดต UI ครั้งแรก
-            updateSetupUI();
-
-            // 3. ตั้งค่า Event Listeners
-            recipeSelect.addEventListener('change', updateSetupUI);
-            coffeeAmount.addEventListener('input', updateSetupUI);
-            startDripButton.addEventListener('click', startDrip);
-            nextStepButton.addEventListener('click', handleNextClick);
-            resetButton.addEventListener('click', handleReset);
-            restartButton.addEventListener('click', handleReset);
-        }
-
-        // --- 6. Run App ---
-        window.addEventListener('load', init);
-
-    </script>
+updateRecipe();
+</script>
 </body>
 </html>
-
