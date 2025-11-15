@@ -53,11 +53,18 @@
             <!-- แสดงข้อมูลสรุป -->
             <div class="bg-gray-50 p-4 rounded-lg space-y-2">
                 <div class="flex justify-between items-center text-lg">
-                    <span class="text-gray-600">อัตราส่วน (กาแฟ : น้ำ):</span>
+                    <span class="text-gray-600">อัตราส่วน (กาแฟ : น้ำร้อน):</span>
                     <span id="ratioDisplay" class="font-bold text-gray-900">1 : 15</span>
                 </div>
+                <!-- เพิ่มการแสดงน้ำแข็งสำหรับสูตรเย็น -->
+                <div id="iceWaterSection" class="hidden">
+                    <div class="flex justify-between items-center text-lg">
+                        <span class="text-gray-600">ปริมาณน้ำแข็ง:</span>
+                        <span id="iceAmountDisplay" class="font-bold text-blue-600">0 ml</span>
+                    </div>
+                </div>
                 <div class="flex justify-between items-center text-lg">
-                    <span class="text-gray-600">ปริมาณน้ำทั้งหมด:</span>
+                    <span class="text-gray-600">ปริมาณน้ำร้อนทั้งหมด:</span>
                     <span id="totalWaterDisplay" class="font-bold text-yellow-800 text-xl">300 ml</span>
                 </div>
             </div>
@@ -72,7 +79,7 @@
             <div class="text-6xl font-mono font-bold text-gray-800" id="mainTimer">00:00</div>
             
             <div class="w-full bg-gray-50 p-3 rounded-lg text-center">
-                <div class="text-sm text-gray-500">น้ำหนักรวมบนตาชั่ง</div>
+                <div class="text-sm text-gray-500">น้ำหนักรวมของน้ำร้อนที่เทไป</div>
                 <div class="text-xl font-bold text-gray-800" id="totalPouredDisplay">0 ml / 300 ml</div>
             </div>
 
@@ -114,11 +121,15 @@
     <script>
         // --- 1. ฐานข้อมูลสูตร (Recipes Database) ---
         // calc_type: 'coffee_x' (คูณน้ำหนักกาแฟ), 'remaining_percent' (เปอร์เซ็นต์ของน้ำที่เหลือ), 'total_percent' (เปอร์เซ็นต์ของน้ำทั้งหมด)
+        // isIced: true สำหรับสูตรดริปเย็น
+        // finalRatio: อัตราส่วนสุดท้าย กาแฟ:น้ำ+น้ำแข็ง (ใช้ในการคำนวณน้ำแข็ง)
         const recipes = [
             {
                 id: 'classic_15',
-                name: 'สูตรคลาสสิก (1:15)',
+                name: 'ดริฟร้อน: สูตรคลาสสิก (1:15)',
                 defaultRatio: 15,
+                isIced: false,
+                finalRatio: 15,
                 steps: [
                     { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, // 3x น้ำหนักกาแฟ, รอ 45 วิ
                     { name: 'เทครั้งที่ 1', calc_type: 'remaining_percent', value: 0.5, duration: 30 }, // 50% ของน้ำที่เหลือ, รอ 30 วิ
@@ -127,26 +138,41 @@
             },
             {
                 id: 'strong_13',
-                name: 'สูตรเข้มข้น 4:6 (1:13)',
+                name: 'ดริฟร้อน: สูตรเข้มข้น (1:13)',
                 defaultRatio: 13,
+                isIced: false,
+                finalRatio: 13,
                 steps: [
-                    // น้ำทั้งหมด = กาแฟ * 13. บลูม = กาแฟ * 3. เหลือ = กาแฟ * 10
-                    // แบ่งเท 4 ครั้ง ครั้งละ กาแฟ * 2.5
                     { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, // 3x, รอ 45 วิ
-                    { name: 'เทครั้งที่ 1 (หวาน)', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
-                    { name: 'เทครั้งที่ 2 (เปรี้ยว)', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
-                    { name: 'เทครั้งที่ 3 (เข้ม)', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
-                    { name: 'เทครั้งที่ 4 (สมดุล)', calc_type: 'coffee_x', value: 2.5, duration: 0 }, // 2.5x, ไม่ต้องรอ
+                    { name: 'เทครั้งที่ 1', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
+                    { name: 'เทครั้งที่ 2', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
+                    { name: 'เทครั้งที่ 3', calc_type: 'coffee_x', value: 2.5, duration: 30 }, // 2.5x, รอ 30 วิ
+                    { name: 'เทครั้งที่ 4', calc_type: 'coffee_x', value: 2.5, duration: 0 }, // 2.5x, ไม่ต้องรอ
                 ]
             },
             {
-                id: 'hoffmann_v60',
-                name: 'สูตร Hoffmann V60 (1:16.6)',
-                defaultRatio: 16.6,
+                id: 'iced_strong_9_5',
+                name: 'ดริฟเย็น: สูตรเข้มข้น (1:9.5)',
+                defaultRatio: 9.5, // 9.5 ส่วนคือน้ำร้อนที่ใช้ดริป
+                isIced: true,
+                finalRatio: 15, // อัตราส่วนสุดท้ายรวมน้ำแข็ง (กาแฟ:น้ำ+น้ำแข็ง)
                 steps: [
-                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, // 3x, รอ 45 วิ
-                    { name: 'เทครั้งที่ 1', calc_type: 'total_percent', value: 0.6, duration: 30 }, // เทถึง 60% ของน้ำทั้งหมด, รอ 30 วิ
-                    { name: 'เทครั้งที่ 2', calc_type: 'total_percent', value: 1.0, duration: 0 }, // เทจนหมด 100%, ไม่ต้องรอ
+                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, 
+                    { name: 'เทครั้งที่ 1', calc_type: 'remaining_percent', value: 0.5, duration: 30 },
+                    { name: 'เทครั้งที่ 2', calc_type: 'remaining_percent', value: 1.0, duration: 0 }, // เทจนน้ำร้อนหมด
+                ]
+            },
+            {
+                id: 'iced_standard_10',
+                name: 'ดริฟเย็น: สูตรมาตรฐาน (1:10)',
+                defaultRatio: 10, // 10 ส่วนคือน้ำร้อนที่ใช้ดริป
+                isIced: true,
+                finalRatio: 16, // อัตราส่วนสุดท้ายรวมน้ำแข็ง (กาแฟ:น้ำ+น้ำแข็ง)
+                steps: [
+                    { name: 'บลูม (Bloom)', calc_type: 'coffee_x', value: 3, duration: 45 }, 
+                    { name: 'เทครั้งที่ 1', calc_type: 'total_percent', value: 0.5, duration: 30 }, // เทถึง 50% ของน้ำร้อน
+                    { name: 'เทครั้งที่ 2', calc_type: 'total_percent', value: 0.8, duration: 30 }, // เทถึง 80% ของน้ำร้อน
+                    { name: 'เทครั้งที่ 3', calc_type: 'total_percent', value: 1.0, duration: 0 }, // เทจนน้ำร้อนหมด
                 ]
             }
         ];
@@ -154,7 +180,8 @@
         // --- 2. ตัวแปรสถานะ (State Variables) ---
         let currentRecipe;
         let coffeeGrams = 20;
-        let totalWater = 0;
+        let totalHotWater = 0; // ปริมาณน้ำร้อนทั้งหมดที่ใช้ดริป
+        let totalIce = 0; // ปริมาณน้ำแข็งที่ใช้
         let totalPoured = 0;
         let currentStepIndex = 0;
         let dripState = 'pouring'; // 'pouring' หรือ 'waiting'
@@ -171,6 +198,8 @@
         const recipeSelect = document.getElementById('recipeSelect');
         const coffeeAmount = document.getElementById('coffeeAmount');
         const ratioDisplay = document.getElementById('ratioDisplay');
+        const iceWaterSection = document.getElementById('iceWaterSection');
+        const iceAmountDisplay = document.getElementById('iceAmountDisplay');
         const totalWaterDisplay = document.getElementById('totalWaterDisplay');
         const startDripButton = document.getElementById('startDripButton');
 
@@ -198,7 +227,7 @@
         /** คำนวณน้ำสำหรับขั้นตอนปัจจุบัน */
         function calculateWaterForStep(step) {
             let water = 0;
-            const remainingWater = totalWater - totalPoured;
+            const remainingWater = totalHotWater - totalPoured;
             
             switch (step.calc_type) {
                 case 'coffee_x':
@@ -209,7 +238,7 @@
                     break;
                 case 'total_percent':
                     // คำนวณน้ำที่ต้องเท "เพิ่ม" เพื่อให้ถึงเปอร์เซ็นต์นั้น
-                    const targetTotal = totalWater * step.value;
+                    const targetTotal = totalHotWater * step.value;
                     water = targetTotal - totalPoured;
                     break;
             }
@@ -221,17 +250,33 @@
         function updateSetupUI() {
             currentRecipe = recipes.find(r => r.id === recipeSelect.value);
             coffeeGrams = parseInt(coffeeAmount.value) || 20;
-            totalWater = Math.round(coffeeGrams * currentRecipe.defaultRatio);
+            
+            // ปริมาณน้ำร้อนที่ใช้ดริป (Hot Water)
+            totalHotWater = Math.round(coffeeGrams * currentRecipe.defaultRatio);
             
             ratioDisplay.textContent = `1 : ${currentRecipe.defaultRatio}`;
-            totalWaterDisplay.textContent = `${totalWater} ml`;
+            totalWaterDisplay.textContent = `${totalHotWater} ml`;
+            
+            // จัดการสูตรดริปเย็น
+            if (currentRecipe.isIced) {
+                iceWaterSection.classList.remove('hidden');
+                // คำนวณปริมาณน้ำแข็ง: น้ำทั้งหมดที่ต้องการ (ตาม finalRatio) - น้ำร้อนที่ใช้ดริป
+                // Iced Ratio (e.g., 1:15 or 1:16) = Coffee : (Hot Water + Ice)
+                const totalLiquidNeeded = Math.round(coffeeGrams * currentRecipe.finalRatio);
+                totalIce = Math.max(0, totalLiquidNeeded - totalHotWater); // น้ำแข็งจะไม่เป็นค่าติดลบ
+                
+                iceAmountDisplay.textContent = `${totalIce} ml`;
+            } else {
+                iceWaterSection.classList.add('hidden');
+                totalIce = 0;
+            }
         }
 
         /** อัปเดต Progress Bar */
         function updateProgressBar() {
-            const percent = (totalPoured / totalWater) * 100;
+            const percent = (totalPoured / totalHotWater) * 100;
             progressBar.style.width = `${percent}%`;
-            totalPouredDisplay.textContent = `${Math.round(totalPoured)} ml / ${totalWater} ml`;
+            totalPouredDisplay.textContent = `${Math.round(totalPoured)} ml / ${totalHotWater} ml`;
         }
 
 
@@ -250,7 +295,7 @@
             const targetWater = totalPoured + waterForThisStep;
             
             stepName.textContent = `ขั้นตอนที่ ${stepIndex + 1}: ${step.name}`;
-            stepInstruction.textContent = `เทน้ำถึง ${Math.round(targetWater)} ml`;
+            stepInstruction.textContent = `เทน้ำร้อนถึง ${Math.round(targetWater)} ml`;
             stepTimerDisplay.textContent = '--:--';
             nextStepButton.textContent = 'เริ่มจับเวลารอ';
             nextStepButton.disabled = false;
@@ -285,8 +330,13 @@
                     nextStepButton.disabled = false;
                     // อาจจะเพิ่มเสียงเตือน
                     try {
-                        navigator.vibrate(200); // สั่นเตือน
-                    } catch (e) {}
+                        // Vibrate on mobile devices for 200ms
+                        if ('vibrate' in navigator) {
+                            navigator.vibrate(200); 
+                        }
+                    } catch (e) {
+                        console.error('Vibrate failed:', e);
+                    }
                 }
             }, 1000);
         }
@@ -296,6 +346,7 @@
             clearInterval(mainTimerInterval);
             clearInterval(stepTimerInterval);
             dripScreen.classList.add('hidden');
+            dripScreen.classList.remove('flex');
             doneScreen.classList.remove('hidden');
             finalTime.textContent = formatTime(mainTimerSeconds);
         }
@@ -387,18 +438,4 @@
             updateSetupUI();
 
             // 3. ตั้งค่า Event Listeners
-            recipeSelect.addEventListener('change', updateSetupUI);
-            coffeeAmount.addEventListener('input', updateSetupUI);
-            startDripButton.addEventListener('click', startDrip);
-            nextStepButton.addEventListener('click', handleNextClick);
-            resetButton.addEventListener('click', handleReset);
-            restartButton.addEventListener('click', handleReset);
-        }
-
-        // --- 6. Run App ---
-        window.addEventListener('load', init);
-
-    </script>
-</body>
-</html>
-
+            recipeSelect.addEventListen'ร้อนร้อน
