@@ -126,7 +126,7 @@
         const recipes = [
             {
                 id: 'classic_15',
-                name: 'ดริฟร้อน: สูตรคลาสสิก (1:15)',
+                name: 'ร้อน: สูตรคลาสสิก (1:15)',
                 defaultRatio: 15,
                 isIced: false,
                 finalRatio: 15,
@@ -138,7 +138,7 @@
             },
             {
                 id: 'strong_13',
-                name: 'ดริฟร้อน: สูตรเข้มข้น (1:13)',
+                name: 'ร้อน: สูตรเข้มข้น (1:13)',
                 defaultRatio: 13,
                 isIced: false,
                 finalRatio: 13,
@@ -152,7 +152,7 @@
             },
             {
                 id: 'iced_strong_9_5',
-                name: 'ดริฟเย็น: สูตรเข้มข้น (1:9.5)',
+                name: 'เย็น: สูตรเข้มข้น (1:9.5) Hot Water',
                 defaultRatio: 9.5, // 9.5 ส่วนคือน้ำร้อนที่ใช้ดริป
                 isIced: true,
                 finalRatio: 15, // อัตราส่วนสุดท้ายรวมน้ำแข็ง (กาแฟ:น้ำ+น้ำแข็ง)
@@ -164,7 +164,7 @@
             },
             {
                 id: 'iced_standard_10',
-                name: 'ดริฟเย็น: สูตรมาตรฐาน (1:10)',
+                name: 'เย็น: สูตรมาตรฐาน (1:10) Hot Water',
                 defaultRatio: 10, // 10 ส่วนคือน้ำร้อนที่ใช้ดริป
                 isIced: true,
                 finalRatio: 16, // อัตราส่วนสุดท้ายรวมน้ำแข็ง (กาแฟ:น้ำ+น้ำแข็ง)
@@ -438,4 +438,18 @@
             updateSetupUI();
 
             // 3. ตั้งค่า Event Listeners
-            recipeSelect.addEventListen'ร้อนร้อน
+            recipeSelect.addEventListener('change', updateSetupUI);
+            coffeeAmount.addEventListener('input', updateSetupUI);
+            startDripButton.addEventListener('click', startDrip);
+            nextStepButton.addEventListener('click', handleNextClick);
+            resetButton.addEventListener('click', handleReset);
+            restartButton.addEventListener('click', handleReset);
+        }
+
+        // --- 6. Run App ---
+        window.addEventListener('load', init);
+
+    </script>
+</body>
+</html>
+
